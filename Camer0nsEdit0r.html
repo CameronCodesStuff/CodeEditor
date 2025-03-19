@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            height: 100vh; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            background-color: black;
+            color: white;
+        }
+        h2 {
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+        }
+        #editor { 
+            width: 100%; 
+            height: calc(100% - 160px); 
+            margin: auto; 
+            border: 1px solid black;
+            background-color: #2e2e2e;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+        select, button { 
+            margin: 5px; 
+            font-size: 16px;
+        }
+        #output-container {
+            display: none; 
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            overflow: auto;
+            z-index: 10;
+        }
+        #output { white-space: pre-wrap; word-wrap: break-word; }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            color: red;
+            cursor: pointer;
+        }
+        #made-by {
+            font-size: 14px;
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Code Editor</h2>
+    <h7>Notices: 1. Once a file is imported, press the import button. 2. Code runner is a work in progress</h7>
+    <p id="made-by">Made by CameronCodesStuff</p>
+    <input type="file" id="importCode" accept=".txt,.js,.py,.html,.java,.c,.cpp">
+    <button onclick="importCode()">Import Code</button>
+    <select id="language">
+        <option value="html" selected>HTML</option>
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="c_cpp">C++</option>
+    </select>
+    <button onclick="runCode()">Run Code</button>
+    <button onclick="downloadCode()">Download Code</button>
+
+    <div id="editor"></div>
+
+    <div id="output-container">
+        <span class="close-btn" onclick="closeOutput()">×</span>
+        <h3>Output:</h3>
+        <pre id="output"></pre>
+    </div>
+    
+    <script>
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/html"); 
+
+        document.getElementById("language").addEventListener("change", function() {
+            editor.session.setMode("ace/mode/" + this.value);
+        });
+
+        function runCode() {
+            const lang = document.getElementById("language").value;
+            const code = editor.getValue();
+            const outputContainer = document.getElementById("output-container");
+
+            document.getElementById("editor").style.opacity = "0";  
+            setTimeout(() => {  
+                document.getElementById("editor").style.display = "none";  
+                outputContainer.style.display = "block"; 
+            }, 300);  
+
+            if (lang === "javascript") {
+                try {
+                    let result = eval(code); 
+                    document.getElementById("output").innerText = result;
+                } catch (err) {
+                    document.getElementById("output").innerText = `Error: ${err}`;
+                }
+            } else if (lang === "html") {
+                try {
+                    document.getElementById("output").innerHTML = code; 
+                } catch (err) {
+                    document.getElementById("output").innerText = `Error rendering HTML: ${err}`;
+                }
+            } else {
+                document.getElementById("output").innerText = "Running this language requires a backend server.";
+            }
+        }
+
+        function closeOutput() {
+            document.getElementById("output-container").style.display = "none";
+            document.getElementById("editor").style.display = "block";  
+            document.getElementById("editor").style.opacity = "1";  
+        }
+
+        function importCode() {
+            const fileInput = document.getElementById("importCode");
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    editor.setValue(e.target.result);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function downloadCode() {
+            const code = editor.getValue();
+            const lang = document.getElementById("language").value;
+            let fileExtension = '';
+
+            switch (lang) {
+                case "javascript":
+                    fileExtension = 'js';
+                    break;
+                case "python":
+                    fileExtension = 'py';
+                    break;
+                case "java":
+                    fileExtension = 'java';
+                    break;
+                case "c_cpp":
+                    fileExtension = 'cpp';
+                    break;
+                case "html":
+                    fileExtension = 'html';
+                    break;
+            }
+
+            const blob = new Blob([code], { type: "text/plain" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `CameronsEditor.${fileExtension}`; 
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
